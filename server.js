@@ -1,15 +1,14 @@
 const express = require("express");
 const cors = require("cors");
-const fetch = require("node-fetch"); // se não estiver instalado: npm install node-fetch@2
+const fetch = require("node-fetch"); // ✅ importando node-fetch
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // garante que o body será JSON válido
 
-// Sua chave OpenAI
-const OPENAI_KEY = "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";
+const OPENAI_KEY = "SEU_OPENAI_KEY_AQUI";
 
-// Lista de palavras-chave "bíblicas"
+// Lista de palavras-chave bíblicas
 const allowedKeywords = [
   // Termos gerais e espirituais
   "bíblia", "biblia", "livro sagrado",
@@ -138,7 +137,7 @@ app.post("/chat", async (req, res) => {
 
     const { message } = req.body;
 
-    // Verifica se a mensagem contém palavras-chave bíblicas
+    // Verifica palavras-chave
     const isBiblical = allowedKeywords.some(keyword =>
       message.toLowerCase().includes(keyword)
     );
@@ -149,7 +148,7 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    // Chama a OpenAI
+    // Chama a API OpenAI
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -180,5 +179,5 @@ app.post("/chat", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Backend rodando na porta ${PORT} e acessível na rede`);
+  console.log(`✅ Backend rodando na porta ${PORT}`);
 });
