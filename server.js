@@ -1,14 +1,16 @@
 const express = require("express");
 const cors = require("cors");
-const fetch = require("node-fetch"); // ✅ importando node-fetch
+const { OpenAI } = require("openai"); // importa o SDK
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // garante que o body será JSON válido
+app.use(express.json());
 
-const OPENAI_KEY = "SEU_OPENAI_KEY_AQUI";
+const OPENAI_KEY = process.env.OPENAI_KEY || "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";
 
-// Lista de palavras-chave bíblicas
+const client = new OpenAI({ apiKey: OPENAI_KEY });
+
+// Lista de palavras-chave bíblicas (allowedKeywords) aqui...
 const allowedKeywords = [
   // Termos gerais e espirituais
   "bíblia", "biblia", "livro sagrado",
@@ -126,8 +128,50 @@ const allowedKeywords = [
   "o senhor é meu pastor", "o senhor e meu pastor",
   "tudo posso em cristo", "deus proverá", "deus proverá o cordeiro",
   "ora sem cessar", "orai sem cessar"
-];
 
+   // Comportamento cristão
+  "santidade", "pureza", "vida santa", "retidão", "retidao",
+  "obediência", "obediencia", "submissão", "submissao",
+  "perdão", "perdao", "reconciliação", "reconciliacao",
+  "humildade", "mansidão", "mansidao", "amor ao próximo", "amor ao proximo",
+  "fruto do espírito", "fruto do espirito", "frutos espirituais",
+  "caridade", "bondade", "paciencia", "paciência", "longanimidade",
+  "perseverança", "perseveranca", "fidelidade",
+  "generosidade", "compaixão", "compaixao",
+  "idolatria", "blasfêmia", "blasfemia",
+  "honra", "honrar pai e mãe", "honrar pai e mae",
+
+  // Doutrinas centrais
+  "fé", "fe", "graça", "graca", "salvação", "salvacao",
+  "redenção", "redencao", "justificação", "justificacao",
+  "santificação", "santificacao", "arrependimento",
+  "batismo", "santa ceia", "eucaristia", "aliança", "alianca",
+  "lei", "graça e lei", "lei e graça", "mandamentos",
+  "novo nascimento", "nascer de novo",
+  "novo pacto", "antigo pacto", "antigo testamento", "novo testamento",
+  "trindade", "pai filho e espirito santo", "pai filho e espírito santo",
+
+  // Questões de pecado e conduta
+  "pecado", "pecados", "transgressão", "transgressao",
+  "iniquidade", "tentação", "tentacao", "carne", "espírito", "espirito",
+  "mundo", "mundo espiritual", "santificar-se", "santificar se",
+  "morte espiritual", "morte eterna", "vida eterna",
+  "idolatria", "falsos profetas", "heresias",
+
+  // Práticas espirituais
+  "oração", "oracao", "orar", "jejum", "vigília", "vigilia",
+  "louvor", "adoração", "adoracao", "culto", "meditação", "meditacao",
+  "consagração", "consagracao", "buscar a deus", "buscar a face do senhor",
+
+  // Ética cristã (aplicações práticas)
+  "casamento cristão", "casamento cristão e biblia", "casamento cristao",
+  "família", "familia", "relacionamento cristão", "namoro cristão", "namoro cristao",
+  "amizade cristã", "amizade cristã e biblia",
+  "trabalho honesto", "mordomia cristã", "mordomia cristã e biblia",
+  "dízimo", "dizimo", "oferta", "generosidade",
+  "autoridade espiritual", "liderança cristã", "lideranca cristã e biblia",
+  "servir ao próximo", "servir ao proximo", "amar ao próximo", "amar ao proximo"
+];
 
 app.post("/chat", async (req, res) => {
   try {
@@ -137,7 +181,6 @@ app.post("/chat", async (req, res) => {
 
     const { message } = req.body;
 
-    // Verifica palavras-chave
     const isBiblical = allowedKeywords.some(keyword =>
       message.toLowerCase().includes(keyword)
     );
@@ -148,27 +191,13 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    // Chama a API OpenAI
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: message,
-      }),
+    // ✅ Chamada usando SDK
+    const response = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [{ role: "user", content: message }],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Erro da API OpenAI:", errorText);
-      return res.status(500).json({ answer: "Erro na API OpenAI", detail: errorText });
-    }
-
-    const data = await response.json();
-    const outputText = data.output?.[0]?.content?.[0]?.text ?? "Não entendi.";
+    const outputText = response.choices[0].message.content;
     res.json({ answer: outputText });
 
   } catch (e) {
