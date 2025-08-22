@@ -1,8 +1,13 @@
 import express from "express";
 import fetch from "node-fetch";
+import dotenv from "dotenv";
+
+dotenv.config(); // Carrega variáveis do .env
 
 const app = express();
 app.use(express.json());
+
+const API_KEY = process.env.OPENAI_API_KEY;
 
 const normalizeText = (text) => {
   return text
@@ -12,6 +17,7 @@ const normalizeText = (text) => {
     .replace(/[.,!?;:()]/g, "");
 };
 
+// Lista de palavras-chave (mantida)
 // Lista de palavras-chave
 const allowedKeywords = [
   // Termos gerais e espirituais
@@ -125,11 +131,12 @@ const allowedKeywords = [
   "orai sem cessar"
 ];
 
-
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
-    if (!message) return res.status(400).json({ answer: "Mensagem obrigatória" });
+    if (!message) {
+      return res.status(400).json({ answer: "Mensagem obrigatória" });
+    }
 
     const normalizedMessage = normalizeText(message);
     const isBiblical = allowedKeywords.some(keyword =>
@@ -143,7 +150,7 @@ app.post("/chat", async (req, res) => {
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -154,26 +161,27 @@ app.post("/chat", async (req, res) => {
             content: `
               Você é um especialista em teologia cristã.
               Responda de maneira clara, organizada e bem estruturada.
-              Formato esperado:
               - Introdução breve (1 parágrafo)
               - Explicação detalhada (2 a 3 parágrafos)
-              - Conclusão com aplicação prática ou resumo.
-
-              Utilize parágrafos separados e, quando necessário, listas.
-              Evite respostas muito curtas e aprofunde-se no contexto bíblico.
+              - Conclusão prática ou resumo final.
+              Separe bem os parágrafos.
             `
           },
           { role: "user", content: message }
-        ]
+        ],
+        max_tokens: 500,
       })
     });
 
     const data = await aiResponse.json();
-    const rawAnswer = data.choices?.[0]?.message?.content || "Não consegui encontrar uma resposta adequada.";
+    console.log("Resposta da OpenAI:", data);
 
-    // Retorna diretamente o texto do modelo
-    return res.json({ answer: data });
-    //return res.json({ answer: rawAnswer });
+    if (!data.choices || !data.choices[0]?.message?.content) {
+      return res.json({ answer: "A IA não retornou uma resposta adequada. Tente novamente." });
+    }
+
+    const rawAnswer = data.choices[0].message.content;
+    return res.json({ answer: rawAnswer });
 
   } catch (error) {
     console.error("Erro no chat:", error);
