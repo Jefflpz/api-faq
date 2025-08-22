@@ -4,17 +4,16 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// Função para normalizar texto (remove acentos e pontuação)
 const normalizeText = (text) => {
   return text
-    .normalize("NFD") // separa caracteres de acento
-    .replace(/[\u0300-\u036f]/g, "") // remove marcas de acento
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[.,!?;:()]/g, ""); // remove pontuação
+    .replace(/[.,!?;:()]/g, "");
 };
 
-// Lista de palavras-chave para identificar perguntas bíblicas
-  const allowedKeywords = [
+// Lista de palavras-chave
+const allowedKeywords = [
   // Termos gerais e espirituais
   "bíblia", "biblia", "livro sagrado", "jesus", "yeshua", "iesus",
   "jesus cristo", "cristo jesus", "cristo", "messias", "salvador",
@@ -133,8 +132,6 @@ app.post("/chat", async (req, res) => {
     if (!message) return res.status(400).json({ answer: "Mensagem obrigatória" });
 
     const normalizedMessage = normalizeText(message);
-
-    // Verifica se alguma palavra-chave está presente
     const isBiblical = allowedKeywords.some(keyword =>
       normalizedMessage.includes(normalizeText(keyword))
     );
@@ -143,7 +140,6 @@ app.post("/chat", async (req, res) => {
       return res.json({ answer: "Não consigo responder perguntas não bíblicas! ❤️" });
     }
 
-    // Simulação de resposta de IA com modelo de resposta estilizado
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -153,19 +149,19 @@ app.post("/chat", async (req, res) => {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { 
-            role: "system", 
-            content: 
-             `Você é um especialista em teologia cristã.
-              Responda sempre em linguagem clara e organizada.
-              Estruture as respostas seguindo este padrão:
+          {
+            role: "system",
+            content: `
+              Você é um especialista em teologia cristã.
+              Responda de maneira clara, organizada e bem estruturada.
+              Formato esperado:
+              - Introdução breve (1 parágrafo)
+              - Explicação detalhada (2 a 3 parágrafos)
+              - Conclusão com aplicação prática ou resumo.
 
-              1. Introdução breve ao tema.
-              2. Explicação detalhada em 2-3 parágrafos.
-              3. Conclusão com um resumo ou aplicação prática.
-
-              Quando apropriado, use tópicos para destacar pontos principais.
-              Evite jargões teológicos complexos.` 
+              Utilize parágrafos separados e, quando necessário, listas.
+              Evite respostas muito curtas e aprofunde-se no contexto bíblico.
+            `
           },
           { role: "user", content: message }
         ]
@@ -175,18 +171,8 @@ app.post("/chat", async (req, res) => {
     const data = await aiResponse.json();
     const rawAnswer = data.choices?.[0]?.message?.content || "Não consegui encontrar uma resposta adequada.";
 
-    // Resposta formatada (com parágrafos e tópicos)
-    const formattedResponse = {
-      titulo: "Resposta Bíblica",
-      paragrafo_inicial: "Segue uma explicação detalhada baseada na Bíblia:",
-      topicos: rawAnswer
-        .split("\n")
-        .filter(p => p.trim() !== "")
-        .map((p, i) => `Tópico ${i + 1}: ${p}`),
-      conclusao: "Espero que essa resposta lhe traga clareza espiritual e sabedoria!"
-    };
-
-    return res.json({ answer: formattedResponse });
+    // Retorna diretamente o texto do modelo
+    return res.json({ answer: rawAnswer });
 
   } catch (error) {
     console.error("Erro no chat:", error);
