@@ -172,7 +172,8 @@ app.post("/chat", async (req, res) => {
     const rawAnswer = data.choices?.[0]?.message?.content || "Não consegui encontrar uma resposta adequada.";
 
     // Retorna diretamente o texto do modelo
-    return res.json({ answer: rawAnswer });
+    return res.json({ answer: data });
+    //return res.json({ answer: rawAnswer });
 
   } catch (error) {
     console.error("Erro no chat:", error);
