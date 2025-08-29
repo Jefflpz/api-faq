@@ -2,7 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 
-dotenv.config(); // Carrega variáveis do .env
+dotenv.config(); 
 
 const app = express();
 app.use(express.json());
@@ -17,8 +17,7 @@ const normalizeText = (text) => {
     .replace(/[.,!?;:()]/g, "");
 };
 
-// Lista de palavras-chave (mantida)
-// Lista de palavras-chave
+
 const allowedKeywords = [
   // Termos gerais e espirituais
   "bíblia", "biblia", "livro sagrado", "jesus", "yeshua", "iesus",
