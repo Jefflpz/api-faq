@@ -34,6 +34,18 @@ function hashSenha(senha) {
   return hash.digest('hex');
 }
 
+function hashSenhaComSalt(senha, salt) {
+  const hash = crypto.createHash('sha256');
+  hash.update(senha + salt);
+  return hash.digest('hex');
+}
+
+function verificarSenha(senhaFornecida, hashArmazenado, saltArmazenado) {
+  const hash = crypto.createHash('sha256');
+  hash.update(senhaFornecida + saltArmazenado);
+  return hash.digest('hex') === hashArmazenado;
+}
+
 function generateSalt() {
   return uuidv4().substring(0, 16);
 }
@@ -89,13 +101,15 @@ app.post("/cadastro", async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email já cadastrado' });
     }
 
-    const senhaHash = hashSenha(senha);
+    // Gera o salt e o hash
+    const salt = generateSalt();
+    const senhaHash = hashSenhaComSalt(senha, salt); // Nova função
 
     const insertResult = await db.query(`
-      INSERT INTO usuarios (email, senha_hash, nome)
-      VALUES ($1, $2, $3)
+      INSERT INTO usuarios (email, senha_hash, salt, nome)
+      VALUES ($1, $2, $3, $4)
       RETURNING id, email, nome, data_criacao
-    `, [email, senhaHash, nome]);
+    `, [email, senhaHash, salt, nome]); // Armazena também o salt
 
     if (insertResult.rows.length > 0) {
       res.status(201).json({
@@ -125,8 +139,8 @@ app.post("/login", async (req, res) => {
     }
 
     const result = await db.query(`
-      SELECT id, email, senha_hash, nome, ativo 
-      FROM usuarios 
+      SELECT id, email, senha_hash, salt, nome, ativo
+      FROM usuarios
       WHERE email = $1
     `, [email]);
 
@@ -138,8 +152,14 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ success: false, message: 'Usuário desativado' });
     }
 
-    const senhaFornecidaHash = hashSenha(senha);
-    const senhaArmazenadaHash = result.rows[0].senha_hash;
+    const usuario = result.rows[0];
+
+    // Usa o salt armazenado para gerar o hash da senha fornecida
+    const senhaFornecidaHash = hashSenhaComSalt(senha, usuario.salt);
+    const senhaArmazenadaHash = usuario.senha_hash;
+
+    console.log('Senha fornecida hash:', senhaFornecidaHash);
+    console.log('Senha armazenada hash:', senhaArmazenadaHash);
 
     if (senhaFornecidaHash !== senhaArmazenadaHash) {
       return res.status(401).json({ success: false, message: 'Senha incorreta' });
@@ -151,21 +171,21 @@ app.post("/login", async (req, res) => {
     await db.query(`
       INSERT INTO sessoes (id_usuario, token_sessao, data_expiracao)
       VALUES ($1, $2, $3)
-    `, [result.rows[0].id, tokenSessao, expiracao]);
+    `, [usuario.id, tokenSessao, expiracao]);
 
     await db.query(`
-      UPDATE usuarios 
-      SET ultimo_login = CURRENT_TIMESTAMP 
+      UPDATE usuarios
+      SET ultimo_login = CURRENT_TIMESTAMP
       WHERE id = $1
-    `, [result.rows[0].id]);
+    `, [usuario.id]);
 
     res.json({
       success: true,
       token: tokenSessao,
       user: {
-        id: result.rows[0].id,
-        email: result.rows[0].email,
-        nome: result.rows[0].nome,
+        id: usuario.id,
+        email: usuario.email,
+        nome: usuario.nome,
       }
     });
   } catch (error) {
@@ -260,7 +280,7 @@ app.post("/redefinir-senha", async (req, res) => {
   }
 });
 
-app.post("/pergunta", autenticarToken, async (req, res) => {
+app.post("/pergunta", async (req, res) => {
   try {
     const { pergunta } = req.body;
 
@@ -276,10 +296,12 @@ app.post("/pergunta", autenticarToken, async (req, res) => {
     const respostaComSucesso = verificarRespostaComSucesso(respostaIA);
 
     if (respostaComSucesso) {
-      await db.query(
-          "INSERT INTO historico_perguntas (id_usuario, pergunta, resposta) VALUES ($1, $2, $3)",
-          [req.user.id, pergunta, respostaIA]
-      );
+      /*if(req.user.id >0){
+        await db.query(
+            "INSERT INTO historico_perguntas (id_usuario, pergunta, resposta) VALUES ($1, $2, $3)",
+            [req.user.id, pergunta, respostaIA]
+        );
+      }*/
 
       try {
         await db.query(
@@ -302,9 +324,6 @@ app.post("/pergunta", autenticarToken, async (req, res) => {
         message: "A IA não conseguiu responder adequadamente à pergunta"
       });
     }
-
-
-
     res.json({ answer: `${pergunta}:${respostaIA}` });
 
   } catch (error) {
