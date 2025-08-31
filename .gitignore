@@ -1,30 +1,23 @@
-# Compiled Object files
-*.o
-*.obj
+# Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Compiled Static libraries
-*.a
-*.lib
+# Variáveis de ambiente
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-node_modules/
+.env.production
 
-# Executables
-*.exe
+# Logs
+logs
+*.log
 
-# DUB
-.dub
-docs.json
-__dummy.html
-docs/
+# Diretório de build
+dist/
+build/
 
-# Code coverage
-*.lst
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
