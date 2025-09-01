@@ -280,6 +280,60 @@ app.post("/redefinir-senha", async (req, res) => {
   }
 });
 
+app.get("/usuario", autenticarToken, async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        nome: req.user.nome,
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao buscar usuário' });
+  }
+});
+
+app.get("/perguntas-recentes", autenticarToken, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT pergunta, resposta 
+      FROM historico_perguntas 
+      WHERE id_usuario = $1 
+      ORDER BY data_pergunta DESC 
+      LIMIT 4
+    `, [req.user.id]);
+
+    res.json({
+      success: true,
+      perguntas: result.rows
+    });
+  } catch (error) {
+    console.error('Erro ao buscar perguntas:', error);
+    res.status(500).json({ success: false, message: 'Erro ao buscar perguntas' });
+  }
+});
+
+app.get("/todas-perguntas", autenticarToken, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT pergunta, resposta, data_pergunta
+      FROM historico_perguntas 
+      WHERE id_usuario = $1 
+      ORDER BY data_pergunta DESC
+    `, [req.user.id]);
+
+    res.json({
+      success: true,
+      perguntas: result.rows
+    });
+  } catch (error) {
+    console.error('Erro ao buscar histórico:', error);
+    res.status(500).json({ success: false, message: 'Erro ao buscar histórico' });
+  }
+});
+
 app.post("/pergunta", async (req, res) => {
   try {
     const { pergunta } = req.body;
