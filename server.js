@@ -302,7 +302,7 @@ app.get("/perguntas-recentes", autenticarToken, async (req, res) => {
       SELECT pergunta, resposta 
       FROM historico_perguntas 
       WHERE id_usuario = $1 
-      ORDER BY data_pergunta DESC 
+      ORDER BY data_criacao DESC 
       LIMIT 4
     `, [req.user.id]);
 
@@ -319,10 +319,10 @@ app.get("/perguntas-recentes", autenticarToken, async (req, res) => {
 app.get("/todas-perguntas", autenticarToken, async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT pergunta, resposta, data_pergunta
+      SELECT pergunta, resposta, data_criacao
       FROM historico_perguntas 
       WHERE id_usuario = $1 
-      ORDER BY data_pergunta DESC
+      ORDER BY data_criacao DESC
     `, [req.user.id]);
 
     res.json({
