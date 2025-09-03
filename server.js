@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import pkg from "pg";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
-import { authMiddleware } from "";
+import { authMiddleware } from "middlewares/middlewares.js";
 
 dotenv.config();
 const { Pool } = pkg;
