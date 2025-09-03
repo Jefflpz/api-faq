@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { Constants } from "../config/constants.js";
 
 export const authMiddleware = (req, res, next) => {
     const authHeader = req.headers["authorization"];
@@ -15,7 +14,7 @@ export const authMiddleware = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || Constants.jwtSecret);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET );
         req.user = decoded;
         next();
     } catch (err) {
