@@ -297,23 +297,22 @@ app.get("/usuario", autenticarToken, async (req, res) => {
 });
 
 app.get("/perguntas-recentes", autenticarToken, async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT pergunta, resposta 
-      FROM historico_perguntas 
-      WHERE id_usuario = $1 
-      ORDER BY data_criacao DESC 
-      LIMIT 4
-    `, [req.user.id]);
+    try {
+        const result = await db.query(`
+            SELECT pergunta, resposta
+            FROM quiz
+            ORDER BY data_criacao DESC
+                LIMIT 4
+        `);
 
-    res.json({
-      success: true,
-      perguntas: result.rows
-    });
-  } catch (error) {
-    console.error('Erro ao buscar perguntas:', error);
-    res.status(500).json({ success: false, message: 'Erro ao buscar perguntas' });
-  }
+        res.json({
+            success: true,
+            perguntas: result.rows
+        });
+    } catch (error) {
+        console.error('Erro ao buscar perguntas:', error);
+        res.status(500).json({ success: false, message: 'Erro ao buscar perguntas' });
+    }
 });
 
 app.get("/todas-perguntas", autenticarToken, async (req, res) => {
