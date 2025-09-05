@@ -342,7 +342,7 @@ app.post("/pergunta", async (req, res) => {
       return res.status(400).json({ answer: "Pergunta obrigatória" });
     }
 
-    const prompt = `Você é um assistente de respostas rápidas e precisa sempre responder perguntas mesmo que não tenha certeza seja pela quantidade de pessoas ou de possibilidades responda sempre o mais provavel. sempre depois de uma resposta mandar um "Sim" caso respondeu a pergunta e "Não" caso não respondeu. Responda em uma frase de no máximo 5 palavras, de forma direta: ${pergunta}`;
+    const prompt = `Você é um assistente de respostas rápidas e precisa sempre responder perguntas mesmo que não tenha certeza seja pela quantidade de pessoas ou de possibilidades responda sempre o mais provavel. Responda em uma frase de no máximo 5 palavras, de forma direta: ${pergunta}`;
 
     const result = await model.generateContent(prompt);
     const respostaIA = result.response.text();
