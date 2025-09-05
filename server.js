@@ -351,17 +351,10 @@ app.post("/pergunta", async (req, res) => {
 
     if (respostaComSucesso) {
       try {
-        if (req.user && req.user.id) {
           await db.query(
-              "INSERT INTO historico_perguntas (id_usuario, pergunta, resposta) VALUES ($1, $2, $3)",
-              [req.user.id, pergunta, respostaIA]
-          );
-        } else {
-          await db.query(
-              "INSERT INTO historico_perguntas (pergunta, resposta) VALUES ($1, $2)",
+              "INSERT INTO quiz (pergunta, resposta) VALUES ($1, $2)",
               [pergunta, respostaIA]
           );
-        }
       } catch (error) {
         console.error("Erro ao salvar no histórico:", error.message);
       }
