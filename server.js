@@ -352,7 +352,7 @@ app.post("/pergunta", async (req, res) => {
     if (respostaComSucesso) {
       try {
           await db.query(
-              "INSERT INTO quiz (pergunta, resposta) VALUES ($1, $2)",
+              "CALL inserir_deletar_antiga ($1, $2)",
               [pergunta, respostaIA]
           );
       } catch (error) {
